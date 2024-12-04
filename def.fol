@@ -1,0 +1,522 @@
+type prop set group 
+term set op(group g, set a, set b) { (a × ^ g b) }
+term set inv(group g, set a) { (a) ^ -1 ^ g }
+term set e(group g) { e ^ g }
+term set items(group g) { g . items }
+
+term prop eq(set a, set b) { (a = b) }
+term prop in(set a, set b) { (a ∈ b) }
+
+axiom eq.com(set a, set b) { 
+    |- eq(a, b) 
+    -| eq(b, a) 
+}
+axiom eq.left(group g, set a, set b, set c) { 
+    |- eq(op(g, a, b), op(g, c, b)) 
+    -| eq(a, c) 
+}
+axiom eq.right(group g, set a, set b, set c) { 
+    |- eq(op(g, a, b), op(g, a, c)) 
+    -| eq(b, c) 
+}
+axiom eq.trans(set a, set b, set c) { 
+    |- eq(a, b) 
+    -| eq(a, c) 
+    -| eq(c, b) 
+}
+
+axiom op.assoc(group g, set a, set b, set c) {
+    |- eq(op(g, op(g, a, b), c), op(g, a, op(g, b, c)))
+    |- eq(op(g, a, op(g, b, c)), op(g, op(g, a, b), c))
+    -| in(a, items(g))
+    -| in(b, items(g))
+    -| in(c, items(g))
+}
+
+axiom e.left(group g, set a) {
+    |- eq(op(g, e(g), a), a)
+    |- eq(a, op(g, e(g), a))
+    -| in(a, items(g))
+}
+
+axiom inv.left(group g, set a) {
+    |- eq(op(g, inv(g, a), a), e(g))
+    |- eq(e(g), op(g, inv(g, a), a))
+    -| in(a, items(g))
+}
+
+axiom op.in(group g, set a, set b) {
+    |- in(op(g, a, b), items(g))
+    -| in(a, items(g))
+    -| in(b, items(g))
+}
+
+axiom inv.in(group g, set a) {
+    |- in(inv(g, a), items(g))
+    -| in(a, items(g))
+}
+
+axiom e.in(group g) {
+    |- in(e(g), items(g))
+}
+
+axiom eq.in(set a, set b, set c) {
+    |- in(a, b)
+    -| in(c, b)
+    -| eq(a, c)
+}
+
+thm eq.rw1(group g, set a, set b, set c, set d) {
+    |- eq(op(g, a, b), c)
+    -| eq(op(g, d, b), c)
+    -| eq(a, d)
+} = {
+    eq.trans(op(g,a,b), c, op(g,d,b))
+    eq.left(g, a, b, d)
+}
+thm eq.rw2(group g, set a, set b, set c, set d) {
+    |- eq(op(g, a, b), c)
+    -| eq(op(g, a, d), c)
+    -| eq(b, d)
+} = {
+    eq.trans(op(g,a,b), c, op(g,a,d))
+    eq.right(g, a, b, d)
+}
+thm eq.rw3(group g, set a, set b, set c, set d) {
+    |- eq(a, op(g, b, c))
+    -| eq(a, op(g, d, c))
+    -| eq(b, d)
+} = {
+    eq.trans(a, op(g,b,c), op(g,d,c))
+    eq.left(g, d, c, b)
+    eq.com(d, b)
+}
+thm eq.rw4(group g, set a, set b, set c, set d) {
+    |- eq(a, op(g, b, c))
+    -| eq(a, op(g, b, d))
+    -| eq(c, d)
+} = {
+    eq.trans(a, op(g,b,c), op(g,b,d))
+    eq.right(g, b, d, c)
+    eq.com(d, c)
+}
+
+thm op.inv.1(group g, set a, set b) {
+    |- eq(op(g, inv(g, a), op(g, a, b)), b)
+    |- eq(b, op(g, inv(g, a), op(g, a, b)))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(b, op(g,inv(g,a),op(g,a,b)))
+    eq.trans(op(g,inv(g,a),op(g,a,b)), b, op(g,op(g,inv(g,a),a),b))
+    op.assoc(g, inv(g,a), a, b)
+    eq.rw1(g, op(g,inv(g,a),a), b, b, e(g))
+    inv.left(g, a)
+    e.left(g, b)
+    inv.in(g, a)
+}
+
+thm eq.left.cancel(group g, set a, set b, set c) { 
+    |- eq(a, b) 
+    -| eq(op(g, c, a), op(g, c, b)) 
+    -| in(a, items(g))
+    -| in(b, items(g))
+    -| in(c, items(g))
+} = {
+    eq.trans(a, b, op(g, e(g), a))
+    e.left(g, a)
+    eq.rw1(g, e(g), a, b, op(g,inv(g,c),c))
+    inv.left(g, c)
+    eq.trans(op(g,op(g,inv(g,c),c),a), b, op(g,inv(g,c),op(g,c,a)))
+    op.assoc(g, inv(g,c), c, a)
+    eq.rw2(g, inv(g,c), op(g,c,a), b, op(g,c,b))
+    op.inv.1(g, c, b)
+    inv.in(g, c)
+}
+
+thm eq.e.1(group g, set a) {
+    |- eq(a, e(g))
+    |- eq(e(g), a)
+    -| eq(op(g, a, a), a)
+    -| in(a, items(g))
+} = {
+    eq.com(e(g), a)
+    eq.trans(a, e(g), op(g,e(g),a))
+    e.left(g, a)
+    eq.rw1(g, e(g), a, e(g), op(g,inv(g,a),a))
+    inv.left(g, a)
+    eq.trans(op(g,op(g,inv(g,a),a),a), e(g), op(g,inv(g,a),op(g,a,a)))
+    op.assoc(g, inv(g,a), a, a)
+    eq.rw2(g, inv(g,a), op(g,a,a), e(g), a)
+    inv.left(g, a)
+    inv.in(g, a)
+}
+
+thm inv.right(group g, set a) {
+    |- eq(op(g, a, inv(g, a)), e(g))
+    |- eq(e(g), op(g, a, inv(g, a)))
+    -| in(a, items(g))
+} = {
+    eq.com(e(g), op(g,a,inv(g,a)))
+    eq.e.1(g, op(g,a,inv(g,a)))
+    eq.trans(op(g,op(g,a,inv(g,a)),op(g,a,inv(g,a))), op(g,a,inv(g,a)), op(g,a,op(g,inv(g,a),op(g,a,inv(g,a)))))
+    op.assoc(g, a, inv(g,a), op(g,a,inv(g,a)))
+    eq.right(g, a, op(g,inv(g,a),op(g,a,inv(g,a))), inv(g,a))
+    op.inv.1(g, a, inv(g,a))
+    op.in(g, a, inv(g,a))
+    inv.in(g, a)
+}
+
+thm op.inv.2(group g, set a, set b) {
+    |- eq(op(g, a, op(g, inv(g, a), b)), b)
+    |- eq(b, op(g, a, op(g, inv(g, a), b)))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(b, op(g,a,op(g,inv(g,a),b)))
+    eq.trans(op(g,a,op(g,inv(g,a),b)), b, op(g,op(g,a,inv(g,a)),b))
+    op.assoc(g, a, inv(g,a), b)
+    eq.rw1(g, op(g,a,inv(g,a)), b, b, e(g))
+    inv.right(g, a)
+    e.left(g, b)
+    inv.in(g, a)
+}
+
+thm e.right(group g, set a) {
+    |- eq(op(g, a, e(g)), a)
+    |- eq(a, op(g, a, e(g)))
+    -| in(a, items(g))
+} = {
+    eq.com(a, op(g,a,e(g)))
+    eq.rw2(g, a, e(g), a, op(g,inv(g,a),a))
+    op.inv.2(g, a, a)
+    inv.left(g, a)
+}
+
+thm op.inv.3(group g, set a, set b) {
+    |- eq(op(g, op(g, a, b), inv(g, b)), a)
+    |- eq(a, op(g, op(g, a, b), inv(g, b)))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(a, op(g,op(g,a,b),inv(g,b)))
+    eq.trans(op(g,op(g,a,b),inv(g,b)), a, op(g,a,op(g,b,inv(g,b))))
+    op.assoc(g, a, b, inv(g,b))
+    eq.rw2(g, a, op(g,b,inv(g,b)), a, e(g))
+    inv.right(g, b)
+    e.right(g, a)
+    inv.in(g, b)
+}
+
+thm op.inv.4(group g, set a, set b) {
+    |- eq(op(g, op(g, a, inv(g, b)), b), a)
+    |- eq(a, op(g, op(g, a, inv(g, b)), b))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(a, op(g,op(g,a,inv(g,b)),b))
+    eq.trans(op(g,op(g,a,inv(g,b)),b), a, op(g,a,op(g,inv(g,b),b)))
+    op.assoc(g, a, inv(g,b), b)
+    eq.rw2(g, a, op(g,inv(g,b),b), a, e(g))
+    inv.left(g, b)
+    e.right(g, a)
+    inv.in(g, b)
+}
+
+thm eq.right.cancel(group g, set a, set b, set c) { 
+    |- eq(a, b) 
+    -| eq(op(g, a, c), op(g, b, c)) 
+    -| in(a, items(g))
+    -| in(b, items(g))
+    -| in(c, items(g))
+} = {
+    eq.trans(a, b, op(g,op(g,a,c),inv(g,c)))
+    op.inv.3(g, a, c)
+    eq.rw1(g, op(g,a,c), inv(g,c), b, op(g,b,c))
+    op.inv.3(g, b, c)
+}
+
+thm eq.e.2(group g, set a, set b) {
+    |- eq(a, e(g))
+    |- eq(e(g), a)
+    -| eq(op(g, a, b), b)
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(e(g), a)
+    eq.right.cancel(g, a, e(g), b)
+    eq.trans(op(g,a,b), op(g,e(g),b), b)
+    e.left(g, b)
+    e.in(g)
+}
+
+thm eq.e.3(group g, set a, set b) {
+    |- eq(a, e(g))
+    |- eq(e(g), a)
+    -| eq(op(g, b, a), b)
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(e(g), a)
+    eq.left.cancel(g, a, e(g), b)
+    e.in(g)
+    eq.trans(op(g,b,a), op(g,b,e(g)), b)
+    e.right(g, b)
+}
+
+thm eq.inv(group g, set a, set b) {
+    |- eq(a, inv(g, b))
+    |- eq(inv(g, b), a)
+    |- eq(b, inv(g, a))
+    |- eq(inv(g, a), b)
+    -| eq(op(g, a, b), e(g))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(inv(g,b), a)
+    eq.right.cancel(g, a, inv(g,b), b)
+    eq.trans(op(g,a,b), op(g,inv(g,b),b), e(g))
+    inv.left(g, b)
+    inv.in(g, b)
+    eq.com(inv(g,a), b)
+    eq.left.cancel(g, b, inv(g,a), a)
+    eq.trans(op(g,a,b), op(g,a,inv(g,a)), e(g))
+    inv.right(g, a)
+    inv.in(g, a)
+}
+
+thm inv.inv(group g, set a) {
+    |- eq(a, inv(g, inv(g, a)))
+    |- eq(inv(g, inv(g, a)), a)
+    -| in(a, items(g))
+} = {
+    eq.com(inv(g,inv(g,a)), a)
+    eq.inv(g, a, inv(g,a))
+    inv.right(g, a)
+    inv.in(g, a)
+}
+
+thm eq.op.e(group g, set a, set b) {
+    |- eq(op(g, a, b), e(g))
+    |- eq(e(g), op(g, a, b))
+    |- eq(op(g, b, a), e(g))
+    |- eq(e(g), op(g, b, a))
+    -| eq(a, inv(g, b))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(e(g), op(g,a,b))
+    eq.rw1(g, a, b, e(g), inv(g,b))
+    inv.left(g, b)
+    eq.com(op(g,b,a), e(g))
+    eq.rw4(g, e(g), b, a, inv(g,b))
+    inv.right(g, b)
+}
+
+thm eq.op.inv.e(group g, set a, set b) {
+    |- eq(op(g, a, inv(g, b)), e(g))
+    |- eq(e(g), op(g, a, inv(g, b)))
+    |- eq(op(g, inv(g, b), a), e(g))
+    |- eq(e(g), op(g, inv(g, b), a))
+    -| eq(a, b)
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.com(e(g), op(g,a,inv(g,b)))
+    eq.com(e(g), op(g,inv(g,b),a))
+    eq.rw1(g, a, inv(g,b), e(g), b)
+    inv.right(g, b)
+    eq.rw2(g, inv(g,b), a, e(g), b)
+    inv.left(g, b)
+}
+
+thm inv.op(group g, set a ,set b) {
+    |- eq(inv(g, op(g, a, b)), op(g, inv(g, b), inv(g, a)))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.inv(g, op(g,inv(g,b),inv(g,a)), op(g,a,b))
+    eq.trans(op(g,op(g,inv(g,b),inv(g,a)),op(g,a,b)), e(g), op(g,inv(g,b),op(g,inv(g,a),op(g,a,b))))
+    op.assoc(g, inv(g,b), inv(g,a), op(g,a,b))
+    eq.op.inv.e(g, op(g,inv(g,a),op(g,a,b)), b)
+    op.inv.1(g, a, b)
+    op.in(g, inv(g,a), op(g,a,b))
+    op.in(g, inv(g,b), inv(g,a))
+    op.in(g, a, b)
+    inv.in(g, b)
+    inv.in(g, a)
+}
+
+thm inv.left.solve(group g, set a, set b, set x) {
+    |- eq(op(g, a, x), b)
+    -| eq(x, op(g, inv(g, a), b))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.rw2(g, a, x, b, op(g,inv(g,a),b))
+    op.inv.2(g, a, b)
+}
+
+thm inv.left.question(group g, set a, set b, set x) {
+    |- eq(x, op(g, inv(g, a), b))
+    -| eq(op(g, a, x), b)
+    -| in(a, items(g))
+    -| in(b, items(g))
+    -| in(x, items(g))
+} = {
+    eq.left.cancel(g, x, op(g,inv(g,a),b), a)
+    eq.trans(op(g,a,x), op(g,a,op(g,inv(g,a),b)), b)
+    op.inv.2(g, a, b)
+    op.in(g, inv(g,a), b)
+    inv.in(g, a)
+}
+
+thm inv.right.solve(group g, set a, set b, set x) {
+    |- eq(op(g, x, a), b)
+    -| eq(x, op(g, b, inv(g, a)))
+    -| in(a, items(g))
+    -| in(b, items(g))
+} = {
+    eq.rw1(g, x, a, b, op(g,b,inv(g,a)))
+    op.inv.4(g, b, a)
+}
+
+thm inv.right.question(group g, set a, set b, set x) {
+    |- eq(x, op(g, b, inv(g, a)))
+    -| eq(op(g, x, a), b)
+    -| in(a, items(g))
+    -| in(b, items(g))
+    -| in(x, items(g))
+} = {
+    eq.right.cancel(g, x, op(g,b,inv(g,a)), a)
+    eq.trans(op(g,x,a), op(g,op(g,b,inv(g,a)),a), b)
+    op.inv.4(g, b, a)
+    op.in(g, b, inv(g,a))
+    inv.in(g, a)
+}
+
+term prop group.eq(group g1, group g2) { (g1 = g2) }
+
+axiom group.eq.def.1(group g1, group g2, set a, set b) {
+    |- group.eq(g1, g2)
+    -| eq(items(g1), items(g2))
+    -| eq(op(g1, a, b), op(g2, a, b))
+    -| in(a, items(g1))
+    -| in(b, items(g1))
+}
+
+axiom group.eq.def.2(group g1, group g2, set a, set b) {
+    |- eq(items(g1), items(g2))
+    |- eq(op(g1, a, b), op(g2, a, b))
+    -| group.eq(g1, g2)
+    -| in(a, items(g1))
+    -| in(b, items(g1))
+}
+
+term prop subgroup(group H, group G) { ( H ≤ G )}
+term prop subset(set a, set b) { ( a ⊆ b ) }
+
+axiom group.sub.def.1(group H, group G, set a, set b) {
+    |- subgroup(H, G)
+    -| subset(items(H), items(G))
+    -| eq(op(H, a, b), op(G, a, b))
+    -| in(a, items(H))
+    -| in(b, items(H))
+}
+
+axiom group.sub.2(group H, group G, set a, set b) {
+    |- subset(items(H), items(G))
+    |- eq(op(H, a, b), op(G, a, b))
+    -| subgroup(H, G)
+    -| in(a, items(H))
+    -| in(b, items(H))
+}
+
+axiom subset.def.1(set a, set b, set x) {
+    |- in(x, a)
+    -| in(x, b)
+    -| subset(b, a)
+}
+
+thm group.sub.e(group H, group G) {
+    |- eq(e(H), e(G))
+    |- eq(e(G), e(H))
+    -| subgroup(H, G)
+} = {
+    eq.com(e(G), e(H))
+    eq.left.cancel(G, e(H), e(G), e(H))
+    eq.trans(op(G,e(H),e(H)), op(G,e(H),e(G)), e(H))
+    e.right(G, e(H))
+    eq.trans(op(G,e(H),e(H)), e(H), op(H,e(H),e(H)))
+    eq.com(op(G,e(H),e(H)), op(H,e(H),e(H)))
+    subset.def.1(items(G), items(H), e(H))
+    group.sub.2(H, G, e(H), e(H))
+    e.left(H, e(H))
+    e.in(H)
+    e.in(G)
+}
+
+thm group.sub.inv(group H, group G, set a) {
+    |- eq(inv(H, a), inv(G, a))
+    |- eq(inv(G, a), inv(H, a))
+    -| subgroup(H, G)
+    -| in(a, items(H))
+} = {
+    eq.com(inv(G,a), inv(H,a))
+    eq.left.cancel(G, inv(H,a), inv(G,a), a)
+    eq.trans(op(G,a,inv(H,a)), op(G,a,inv(G,a)), e(G))
+    inv.right(G, a)
+    eq.trans(op(G,a,inv(H,a)), e(G), op(H,a,inv(H,a)))
+    eq.com(op(G,a,inv(H,a)), op(H,a,inv(H,a)))
+    group.sub.2(H, G, a, inv(H,a))
+    eq.trans(op(H,a,inv(H,a)), e(G), e(H))
+    inv.right(H, a)
+    group.sub.e(H, G)
+    inv.in(G, a)
+    subset.def.1(items(G), items(H), a)
+    subset.def.1(items(G), items(H), inv(H,a))
+    inv.in(H, a)
+    group.sub.2(H, G, a, a)
+}
+
+
+type set->set 
+term set call(set->set f, set a) { f ( a ) }
+term set->set homof(group H, group G) { f ^ H ^ G }
+
+axiom homof.def(group H, group G, set a, set b) {
+    |- in(call(homof(H, G), a),  items(G))
+    |- eq(call(homof(H, G), op(H, a, b)), op(G, call(homof(H, G), a), call(homof(H, G), b)))
+    -| in(a, items(H))
+    -| in(b, items(H))
+}
+
+term set coset.left(group G, set a) { a G }
+term set coset.right(group G, set a) { G a }
+
+axiom coset.left.def.1(group G, set a, set b) {
+    |- in(op(G, a, b), coset.left(G, a))
+    -| in(a, items(G))
+    -| in(b, items(G))
+}
+
+term prop exist(set x, prop p) { ∃(x, p) }
+
+axiom coset.left.def.2(group G, set a, set b, set c) {
+    |- exist(c, eq(op(G, a, c), b))
+    -| in(a, items(G))
+    -| in(b, coset.left(G, a))
+}
+
+axiom coset.right.def.1(group G, set a, set b) {
+    |- in(op(G, a, b), coset.right(G, b))
+    -| in(a, items(G))
+    -| in(b, items(G))
+}
+
+axiom coset.right.def.2(group G, set a, set b, set c) {
+    |- exist(c, eq(op(G, c, a), b))
+    -| in(a, items(G))
+    -| in(b, coset.left(G, a))
+}
+
